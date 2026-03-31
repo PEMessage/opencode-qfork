@@ -1,0 +1,26 @@
+{
+  "name": "opencode-qfork",
+  "version": "1.0.0",
+  "description": "Quick fork plugin for OpenCode - fork session without git worktree",
+  "type": "module",
+  "main": "./qfork.js",
+  "types": "./qfork.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "fork",
+    "session"
+  ],
+  "peerDependencies": {
+    "@opencode-ai/plugin": ">=0.13.7"
+  },
+  "devDependencies": {
+    "@opencode-ai/plugin": "^1.3.2",
+    "@opencode-ai/sdk": "^1.3.2",
+    "typescript": "^6.0.2"
+  }
+}

@@ -49,28 +49,61 @@ async function quickFork(
 			})
 			.catch(() => {}) // Ignore logging errors
 
+		// Append reason to forked session title if provided
+		if (reason) {
+			try {
+				const currentTitle = forkedSession.title || ""
+				const newTitle = currentTitle
+					? `${currentTitle} -- ${reason}`
+					: reason
+				await client.session.update({
+					path: { id: forkedSession.id },
+					body: { title: newTitle },
+				})
+			} catch {
+				// Silently ignore title update errors
+			}
+		}
+
 		// Switch to the new session using TUI publish API
+		try {
+			await client.tui.publish({
+				body: {
+					type: "tui.session.select",
+					properties: {
+						sessionID: forkedSession.id,
+					},
+				} as any,
+			})
+		} catch (switchError) {
+			// If switch fails, just log it - user can manually switch
+			const errMsg = switchError instanceof Error ? switchError.message : String(switchError)
+			await client.app.log({
+				body: {
+					service: "qfork",
+					level: "warn",
+					message: `Failed to auto-switch to new session: ${errMsg}`,
+				},
+			})
+			.catch(() => {})
+		}
+
+		// Show success toast
 		try {
 			await client.tui.publish({
 				body: {
 					type: "tui.toast.show",
 					properties: {
 						title: "Session Forked",
-						message: `Switched to forked session: ${forkedSession.id}`,
+						message: reason
+							? `Forked with reason: ${reason}`
+							: `Switched to forked session`,
 						variant: "success",
 					},
 				},
 			})
-		} catch (switchError) {
-			// If switch fails, just log it - user can manually switch
-			await client.app.log({
-					body: {
-						service: "qfork",
-						level: "warn",
-						message: `Failed to auto-switch to new session: ${switchError}`,
-					},
-				})
-				.catch(() => {})
+		} catch {
+			// Ignore toast errors
 		}
 
 		return {

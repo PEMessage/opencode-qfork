@@ -17,131 +17,131 @@ import { OpencodeClient } from "@opencode-ai/sdk/client";
  * Fork session and switch to it - simple and fast
  */
 async function quickFork(
-	client: OpencodeClient,
-	sessionID: string,
-	reason?: string,
+    client: OpencodeClient,
+    sessionID: string,
+    reason?: string,
 ): Promise<{ success: boolean; message: string; newSessionId?: string }> {
-	try {
-		// Fork the session
-		const forkResponse = await client.session.fork({
-			path: { id: sessionID },
-			body: {},
-		})
+    try {
+        // Fork the session
+        const forkResponse = await client.session.fork({
+            path: { id: sessionID },
+            body: {},
+        })
 
-		const forkedSession = forkResponse.data
-		if (!forkedSession?.id) {
-			return { success: false, message: "Failed to fork session: no session data returned" }
-		}
+        const forkedSession = forkResponse.data
+        if (!forkedSession?.id) {
+            return { success: false, message: "Failed to fork session: no session data returned" }
+        }
 
-		// Log the fork action
-		await client.app
-			.log({
-				body: {
-					service: "qfork",
-					level: "info",
-					message: `Session forked${reason ? `: ${reason}` : ""}`,
-					extra: {
-						originalSession: sessionID,
-						newSession: forkedSession.id,
-						reason,
-					},
-				},
-			})
-			.catch(() => {}) // Ignore logging errors
+        // Log the fork action
+        await client.app
+        .log({
+            body: {
+                service: "qfork",
+                level: "info",
+                message: `Session forked${reason ? `: ${reason}` : ""}`,
+                extra: {
+                    originalSession: sessionID,
+                    newSession: forkedSession.id,
+                    reason,
+                },
+            },
+        })
+        .catch(() => {}) // Ignore logging errors
 
-		// Append reason to forked session title if provided
-		if (reason) {
-			try {
-				const currentTitle = forkedSession.title || ""
-				const newTitle = currentTitle
-					? `${currentTitle} -- ${reason}`
-					: reason
-				await client.session.update({
-					path: { id: forkedSession.id },
-					body: { title: newTitle },
-				})
-			} catch {
-				// Silently ignore title update errors
-			}
-		}
+        // Append reason to forked session title if provided
+        if (reason) {
+            try {
+                const currentTitle = forkedSession.title || ""
+                const newTitle = currentTitle
+                    ? `${currentTitle} -- ${reason}`
+                    : reason
+                    await client.session.update({
+                        path: { id: forkedSession.id },
+                        body: { title: newTitle },
+                    })
+            } catch {
+                // Silently ignore title update errors
+            }
+        }
 
-		// Switch to the new session using TUI publish API
-		try {
-			await client.tui.publish({
-				body: {
-					type: "tui.session.select",
-					properties: {
-						sessionID: forkedSession.id,
-					},
-				} as any,
-			})
-		} catch (switchError) {
-			// If switch fails, just log it - user can manually switch
-			const errMsg = switchError instanceof Error ? switchError.message : String(switchError)
-			await client.app.log({
-				body: {
-					service: "qfork",
-					level: "warn",
-					message: `Failed to auto-switch to new session: ${errMsg}`,
-				},
-			})
-			.catch(() => {})
-		}
+        // Switch to the new session using TUI publish API
+        try {
+            await client.tui.publish({
+                body: {
+                    type: "tui.session.select",
+                    properties: {
+                        sessionID: forkedSession.id,
+                    },
+                } as any,
+            })
+        } catch (switchError) {
+            // If switch fails, just log it - user can manually switch
+            const errMsg = switchError instanceof Error ? switchError.message : String(switchError)
+            await client.app.log({
+                body: {
+                    service: "qfork",
+                    level: "warn",
+                    message: `Failed to auto-switch to new session: ${errMsg}`,
+                },
+            })
+            .catch(() => {})
+        }
 
-		// Show success toast
-		try {
-			await client.tui.publish({
-				body: {
-					type: "tui.toast.show",
-					properties: {
-						title: "Session Forked",
-						message: reason
-							? `Forked with reason: ${reason}`
-							: `Switched to forked session`,
-						variant: "success",
-					},
-				},
-			})
-		} catch {
-			// Ignore toast errors
-		}
+        // Show success toast
+        try {
+            await client.tui.publish({
+                body: {
+                    type: "tui.toast.show",
+                    properties: {
+                        title: "Session Forked",
+                        message: reason
+                            ? `Forked with reason: ${reason}`
+                            : `Switched to forked session`,
+                            variant: "success",
+                    },
+                },
+            })
+        } catch {
+            // Ignore toast errors
+        }
 
-		return {
-			success: true,
-			message: `Session forked and switched to: ${forkedSession.id}`,
-			newSessionId: forkedSession.id,
-		}
-	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : String(error)
-		return { success: false, message: `Fork failed: ${errorMessage}` }
-	}
+        return {
+            success: true,
+            message: `Session forked and switched to: ${forkedSession.id}`,
+            newSessionId: forkedSession.id,
+        }
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        return { success: false, message: `Fork failed: ${errorMessage}` }
+    }
 }
 
 // Thanks to: opencode-dynamic-context-pruning/lib/ui/notification.ts
 async function sendIgnoredMessage(
-	client: OpencodeClient,
-	sessionID: string,
-	text: string,
+    client: OpencodeClient,
+    sessionID: string,
+    text: string,
 ): Promise<void> {
-	try {
-		await client.session.prompt({
-			path: {
-				id: sessionID,
-			},
-			body: {
-				noReply: true,
-				parts: [
-					{
-						type: "text",
-						text: text,
-						ignored: true,
-					},
-				],
-			},
-		})
-	} catch (error: any) {
-		// Silently ignore errors
-	}
+    try {
+        await client.session.prompt({
+            path: {
+                id: sessionID,
+            },
+            body: {
+                noReply: true,
+                parts: [
+                    {
+                        type: "text",
+                        text: text,
+                        ignored: true,
+                    },
+                ],
+            },
+        })
+    } catch (error: any) {
+        // Silently ignore errors
+    }
 }
 
 /**
@@ -150,58 +150,58 @@ async function sendIgnoredMessage(
  * Provides the /qfork command for rapid session forking.
  */
 const QuickForkPlugin: Plugin = async (ctx: PluginInput) => {
-	const { client } = ctx
+    const { client } = ctx
 
-	return {
-		// Register /qfork command
-		config: async (opencodeConfig) => {
-			opencodeConfig.command ??= {}
-			opencodeConfig.command["qfork"] = {
-				template: "[reason]",
-				description: "Quickly fork the current session and switch to it",
-			}
-		},
+    return {
+        // Register /qfork command
+        config: async (opencodeConfig) => {
+            opencodeConfig.command ??= {}
+            opencodeConfig.command["qfork"] = {
+                template: "[reason]",
+                description: "Quickly fork the current session and switch to it",
+            }
+        },
 
-		// Handle /qfork command execution
-		"command.execute.before": async (input, output) => {
-			if (input.command !== "qfork") return
+        // Handle /qfork command execution
+        "command.execute.before": async (input, output) => {
+            if (input.command !== "qfork") return
 
-			// Extract optional reason from arguments
-			const reason = (input.arguments || "").trim() || undefined
+                // Extract optional reason from arguments
+                const reason = (input.arguments || "").trim() || undefined
 
-			// Fork the session and switch to it
-			const result = await quickFork(client, input.sessionID, reason)
+                // Fork the session and switch to it
+                const result = await quickFork(client, input.sessionID, reason)
 
-			if (result.success) {
-				// Send ignored message to the NEW forked session
-				await sendIgnoredMessage(
-					client,
-					result.newSessionId!,  // Use the new session ID
-					`✅ ${result.message}`,
-				)
-				// Send bell notification
-				await Bun.write(Bun.stdout, "\x07")
-			} else {
-				// Log error to app log
-				await client.app
-					.log({
-						body: {
-							service: "qfork",
-							level: "error",
-							message: result.message,
-							extra: {
-								sessionID: input.sessionID,
-								reason,
-							},
-						},
-					})
-					.catch(() => {}) // Ignore logging errors
-			}
+                if (result.success) {
+                    // Send ignored message to the NEW forked session
+                    await sendIgnoredMessage(
+                        client,
+                        result.newSessionId!,  // Use the new session ID
+                        `✅ ${result.message}`,
+                    )
+                    // Send bell notification
+                    await Bun.write(Bun.stdout, "\x07")
+                } else {
+                    // Log error to app log
+                    await client.app
+                    .log({
+                        body: {
+                            service: "qfork",
+                            level: "error",
+                            message: result.message,
+                            extra: {
+                                sessionID: input.sessionID,
+                                reason,
+                            },
+                        },
+                    })
+                    .catch(() => {}) // Ignore logging errors
+                }
 
-			// Mark command as handled
-			throw new Error("__QFORK_HANDLED__")
-		},
-	}
+                // Mark command as handled
+                throw new Error("__QFORK_HANDLED__")
+        },
+    }
 }
 
 export default QuickForkPlugin

@@ -110,14 +110,14 @@ Plugins follow the OpenCode hooks pattern:
 ```typescript
 const MyPlugin: Plugin = async (ctx: PluginInput) => {
     const { client } = ctx
-    
+
     return {
         // Register commands
         config: async (opencodeConfig) => { },
-        
+
         // Handle command execution
         "command.execute.before": async (input, output) => { },
-        
+
         // Other hooks: "chat.message", "tool.execute.before", etc.
     }
 }

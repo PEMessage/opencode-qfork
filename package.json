@@ -8,7 +8,9 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "dev": "bun run build && OPENCODE_CONFIG=.dev/opencode.jsonc opencode"
+    "dev": "bun run build && OPENCODE_CONFIG=.dev/opencode.jsonc opencode",
+    "format": "eclint fix .",
+    "format:check": "eclint check ."
   },
   "keywords": [
     "opencode",
@@ -23,6 +25,7 @@
     "@opencode-ai/plugin": "^1.3.2",
     "@opencode-ai/sdk": "^1.3.2",
     "@types/bun": "^1.2.0",
+    "eclint": "^2.8.1",
     "typescript": "^6.0.2"
   }
 }

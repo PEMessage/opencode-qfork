@@ -9,7 +9,8 @@
     "skipLibCheck": true,
     "declaration": true,
     "outDir": ".",
-    "rootDir": "."
+    "rootDir": ".",
+    "types": ["bun"]
   },
   "include": ["qfork.ts"],
   "exclude": ["node_modules"]

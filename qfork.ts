@@ -110,13 +110,18 @@ const QuickForkPlugin: Plugin = async (ctx: PluginInput) => {
 			// Fork the session and switch to it
 			const result = await quickFork(client, input.sessionID, reason)
 
-			// Send response to user
-			output.parts.push({
-				type: "text",
-				text: result.success
-					? `✅ ${result.message}`
-					: `❌ ${result.message}`,
-			} as any)
+		// Send response to user
+		output.parts.push({
+			type: "text",
+			text: result.success
+				? `✅ ${result.message}`
+				: `❌ ${result.message}`,
+		} as any)
+
+		// Send bell notification on success
+		if (result.success) {
+			await Bun.write(Bun.stdout, "\x07")
+		}
 
 			// Mark command as handled
 			throw new Error("__QFORK_HANDLED__")

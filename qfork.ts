@@ -11,12 +11,13 @@
  */
 
 import type { Plugin, PluginInput } from "@opencode-ai/plugin"
+import { OpencodeClient } from "@opencode-ai/sdk/client";
 
 /**
  * Fork session and switch to it - simple and fast
  */
 async function quickFork(
-	client: any,
+	client: OpencodeClient,
 	sessionID: string,
 	reason?: string,
 ): Promise<{ success: boolean; message: string; newSessionId?: string }> {
@@ -39,7 +40,7 @@ async function quickFork(
 					service: "qfork",
 					level: "info",
 					message: `Session forked${reason ? `: ${reason}` : ""}`,
-					metadata: {
+					extra: {
 						originalSession: sessionID,
 						newSession: forkedSession.id,
 						reason,
@@ -52,16 +53,17 @@ async function quickFork(
 		try {
 			await client.tui.publish({
 				body: {
-					type: "tui.session.select",
+					type: "tui.toast.show",
 					properties: {
-						sessionID: forkedSession.id,
+						title: "Session Forked",
+						message: `Switched to forked session: ${forkedSession.id}`,
+						variant: "success",
 					},
 				},
 			})
 		} catch (switchError) {
 			// If switch fails, just log it - user can manually switch
-			await client.app
-				.log({
+			await client.app.log({
 					body: {
 						service: "qfork",
 						level: "warn",
@@ -84,7 +86,7 @@ async function quickFork(
 
 // Thanks to: opencode-dynamic-context-pruning/lib/ui/notification.ts
 async function sendIgnoredMessage(
-	client: any,
+	client: OpencodeClient,
 	sessionID: string,
 	text: string,
 ): Promise<void> {
@@ -147,11 +149,20 @@ const QuickForkPlugin: Plugin = async (ctx: PluginInput) => {
 				// Send bell notification
 				await Bun.write(Bun.stdout, "\x07")
 			} else {
-				// Send error response
-				output.parts.push({
-					type: "text",
-					text: `❌ ${result.message}`,
-				} as any)
+				// Log error to app log
+				await client.app
+					.log({
+						body: {
+							service: "qfork",
+							level: "error",
+							message: result.message,
+							extra: {
+								sessionID: input.sessionID,
+								reason,
+							},
+						},
+					})
+					.catch(() => {}) // Ignore logging errors
 			}
 
 			// Mark command as handled

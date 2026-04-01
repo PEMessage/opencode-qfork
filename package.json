@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Quick fork plugin for OpenCode - fork session without git worktree",
   "type": "module",
-  "main": "./qfork.js",
+  "main": "./qfork.ts",
   "types": "./qfork.d.ts",
   "scripts": {
     "build": "tsc",

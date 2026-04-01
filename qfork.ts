@@ -82,6 +82,33 @@ async function quickFork(
 	}
 }
 
+// Thanks to: opencode-dynamic-context-pruning/lib/ui/notification.ts
+async function sendIgnoredMessage(
+	client: any,
+	sessionID: string,
+	text: string,
+): Promise<void> {
+	try {
+		await client.session.prompt({
+			path: {
+				id: sessionID,
+			},
+			body: {
+				noReply: true,
+				parts: [
+					{
+						type: "text",
+						text: text,
+						ignored: true,
+					},
+				],
+			},
+		})
+	} catch (error: any) {
+		// Silently ignore errors
+	}
+}
+
 /**
  * Quick Fork Plugin
  *
@@ -110,18 +137,22 @@ const QuickForkPlugin: Plugin = async (ctx: PluginInput) => {
 			// Fork the session and switch to it
 			const result = await quickFork(client, input.sessionID, reason)
 
-		// Send response to user
-		output.parts.push({
-			type: "text",
-			text: result.success
-				? `✅ ${result.message}`
-				: `❌ ${result.message}`,
-		} as any)
-
-		// Send bell notification on success
-		if (result.success) {
-			await Bun.write(Bun.stdout, "\x07")
-		}
+			if (result.success) {
+				// Send ignored message to the NEW forked session
+				await sendIgnoredMessage(
+					client,
+					result.newSessionId!,  // Use the new session ID
+					`✅ ${result.message}`,
+				)
+				// Send bell notification
+				await Bun.write(Bun.stdout, "\x07")
+			} else {
+				// Send error response
+				output.parts.push({
+					type: "text",
+					text: `❌ ${result.message}`,
+				} as any)
+			}
 
 			// Mark command as handled
 			throw new Error("__QFORK_HANDLED__")
